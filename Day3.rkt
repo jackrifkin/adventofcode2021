@@ -108,44 +108,30 @@
 (define (oxygen-rating los)
   (local [;; (separates the BinaryStrings in the list into a list of single-bit BinaryStrings)
           (define EXPLODED (map explode los))
-          ;; oxygen/acc : [List-of [List-of BinaryString]] [List-of [List-of BinaryString]] ->
-          ;;              [List-of [List-of BinaryString]]
+          ;; oxygen/acc : [List-of [List-of BinaryString]] Integer -> BinaryString
           ;; computes the oxygen rating
-          ;; ACCUMULATOR : filtered-list keeps track of the filtered version of the original list
-          ;;               of BinaryStrings
-          (define (oxygen/acc lolos filtered-list)
-            (cond [(= (length filtered-list) 1) (implode (first filtered-list))]
+          ;; ACCUMULATOR : index keeps track of the current bit position
+          (define (oxygen/acc lolos index)
+            (cond [(= 1 (length lolos)) (implode (first lolos))]
                   [else
-                   (oxygen/acc (map rest lolos)
-                               (if (string=?
-                                    (most-common (map (λ(los)
-                                                        (list-tail los
-                                                                   (- (length los)
-                                                                      (length (first lolos)))))
-                                                      filtered-list)
-                                                 0 0) "0")
-                                   (filter (λ(los)
-                                             (string=? (list-ref los (- (length (first filtered-list))
-                                                                        (length (first lolos))))
-                                                       "0"))
-                                           filtered-list)
-                                   (filter (λ(los)
-                                             (string=? (list-ref los (- (length (first filtered-list))
-                                                                        (length (first lolos))))
-                                                       "1"))
-                                           filtered-list)))]))
-          ;; most-commmon : [List-of [List-of BinaryString]] -> BinaryString
+                   (oxygen/acc (if (string=? (most-common lolos 0 0 index) "0")
+                                   (filter (λ(los) (string=? (list-ref los index) "0"))
+                                           lolos)
+                                   (filter (λ(los) (string=? (list-ref los index) "1"))
+                                           lolos))
+                               (add1 index))]))
+          ;; most-commmon : [List-of [List-of BinaryString]] Integer Integer Integer -> BinaryString
           ;; calculates the most common first digit in a list of binary numbers
           ;; ACCUMULATORS : count0 keeps track of the amount of first digits that are zeros
           ;;                count1 keeps track of the amount of first digits that are ones
-          (define (most-common lolos count0 count1)
+          (define (most-common lolos count0 count1 index)
             (cond [(empty? lolos) (if (> count0 count1)
                                       "0" "1")]
                   [(cons? lolos)
-                   (if (string=? "0" (first (first lolos)))
-                       (most-common (rest lolos) (add1 count0) count1)
-                       (most-common (rest lolos) count0 (add1 count1)))]))]
-    (oxygen/acc EXPLODED EXPLODED)))
+                   (if (string=? "0" (list-ref (first lolos) index))
+                       (most-common (rest lolos) (add1 count0) count1 index)
+                       (most-common (rest lolos) count0 (add1 count1) index))]))]
+    (oxygen/acc EXPLODED 0)))
 
 (binary->decimal (oxygen-rating (read-words "Input3.txt")))
 
@@ -155,49 +141,32 @@
 (define (co2-rating los)
   (local [;; (separates the BinaryStrings in the list into a list of single-bit BinaryStrings)
           (define EXPLODED (map explode los))
-          ;; co2/acc : [List-of [List-of BinaryString]] [List-of [List-of BinaryString]] ->
-          ;;           [List-of [List-of BinaryString]]
+          ;; co2/acc : [List-of [List-of BinaryString]] Integer -> BinaryString
           ;; computes the co2 rating
-          ;; ACCUMULATOR : filtered-list keeps track of the filtered version of the original list
-          ;;               of BinaryStrings
-          (define (co2/acc lolos filtered-list)
-            (cond [(= (length filtered-list) 1) (implode (first filtered-list))]
+          ;; ACCUMULATOR : index keeps track of the current bit position
+          (define (co2/acc lolos index)
+            (cond [(= 1 (length lolos)) (implode (first lolos))]
                   [else
-                   (co2/acc (map rest lolos)
-                            (if (string=?
-                                 (least-common (map (λ(los)
-                                                      (list-tail los
-                                                                 (- (length los)
-                                                                    (length (first lolos)))))
-                                                    filtered-list)
-                                               0 0)
-                                 "0")
-                                (filter (λ(los)
-                                          (string=? (list-ref los (- (length (first filtered-list))
-                                                                     (length (first lolos))))
-                                                    "0"))
-                                        filtered-list)
-                                (filter (λ(los)
-                                          (string=? (list-ref los (- (length (first filtered-list))
-                                                                     (length (first lolos))))
-                                                    "1"))
-                                        filtered-list)))]))
+                   (co2/acc (if (string=? (least-common lolos 0 0 index) "0")
+                                (filter (λ(los) (string=? (list-ref los index) "0"))
+                                        lolos)
+                                (filter (λ(los) (string=? (list-ref los index) "1"))
+                                        lolos))
+                            (add1 index))]))
           ;; least-common : [List-of [List-of BinaryString]] Nat Nat -> BinaryString
           ;; computes the least common first digit in a list of binary numbers
           ;; ACCUMULATORS : count0 keeps track of the amount of first digits that are zeros
           ;;                count1 keeps track of the amount of first digits that are ones
-          (define (least-common lolos count0 count1)
+          (define (least-common lolos count0 count1 index)
             (cond [(empty? lolos) (if (<= count0 count1)
                                       "0" "1")]
                   [(cons? lolos)
-                   (if (string=? "0" (first (first lolos)))
-                       (least-common (rest lolos) (add1 count0) count1)
-                       (least-common (rest lolos) count0 (add1 count1)))]))]
-    (co2/acc EXPLODED EXPLODED)))
+                   (if (string=? "0" (list-ref (first lolos) index))
+                       (least-common (rest lolos) (add1 count0) count1 index)
+                       (least-common (rest lolos) count0 (add1 count1) index))]))]
+    (co2/acc EXPLODED 0)))
 
 (binary->decimal (co2-rating (read-words "Input3.txt")))
-
-
 
 
 
